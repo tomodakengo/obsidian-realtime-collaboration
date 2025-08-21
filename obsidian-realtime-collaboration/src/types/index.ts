@@ -31,6 +31,7 @@ export enum Permission {
 export interface SharedFolder {
 	id: string
 	name: string
+	description?: string
 	passwordHash: string
 	participants: Set<string>
 	permissions: Map<string, Permission[]>

@@ -1,15 +1,12 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { AccessControl, Permission, SharedFolder } from '../src/security/AccessControl'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { AccessControl } from '../src/security/AccessControl'
+import { Permission, SharedFolder } from '../src/types'
 
 describe('AccessControl', () => {
 	let accessControl: AccessControl
 
 	beforeEach(() => {
 		accessControl = new AccessControl()
-	})
-
-	afterEach(() => {
-		accessControl.destroy()
 	})
 
 	it('creates an access control instance', () => {
@@ -20,6 +17,7 @@ describe('AccessControl', () => {
 		const folder: SharedFolder = {
 			id: 'test-folder',
 			name: 'Test Folder',
+			description: 'Test folder description',
 			passwordHash: 'hashed-password',
 			participants: new Set(['user1']),
 			permissions: new Map([['user1', [Permission.READ, Permission.WRITE]]])
@@ -38,6 +36,7 @@ describe('AccessControl', () => {
 		accessControl.createSharedFolder({
 			id: folderId,
 			name: 'Test Folder',
+			description: 'Test folder description',
 			passwordHash: 'hashed-password',
 			participants: new Set(['user1']),
 			permissions: new Map([['user1', [Permission.READ, Permission.WRITE]]])
@@ -55,6 +54,7 @@ describe('AccessControl', () => {
 		accessControl.createSharedFolder({
 			id: folderId,
 			name: 'Test Folder',
+			description: 'Test folder description',
 			passwordHash: 'hashed-password',
 			participants: new Set(['user1', 'user2']),
 			permissions: new Map([
@@ -75,6 +75,7 @@ describe('AccessControl', () => {
 		accessControl.createSharedFolder({
 			id: folderId,
 			name: 'Test Folder',
+			description: 'Test folder description',
 			passwordHash: 'hashed-password',
 			participants: new Set(['user1']),
 			permissions: new Map([['user1', [Permission.READ, Permission.WRITE]]])
@@ -91,6 +92,7 @@ describe('AccessControl', () => {
 		accessControl.createSharedFolder({
 			id: folderId,
 			name: 'Test Folder',
+			description: 'Test folder description',
 			passwordHash: 'hashed-password',
 			participants: new Set(['user1']),
 			permissions: new Map([['user1', [Permission.READ]]])
@@ -106,6 +108,7 @@ describe('AccessControl', () => {
 		accessControl.createSharedFolder({
 			id: folderId,
 			name: 'Test Folder',
+			description: 'Test folder description',
 			passwordHash: 'hashed-password',
 			participants: new Set(['user1']),
 			permissions: new Map([['user1', [Permission.READ, Permission.WRITE]]])
@@ -121,6 +124,7 @@ describe('AccessControl', () => {
 		const folder1: SharedFolder = {
 			id: 'folder1',
 			name: 'Folder 1',
+			description: 'Folder 1 description',
 			passwordHash: 'hash1',
 			participants: new Set(['user1']),
 			permissions: new Map([['user1', [Permission.READ]]])
@@ -129,6 +133,7 @@ describe('AccessControl', () => {
 		const folder2: SharedFolder = {
 			id: 'folder2',
 			name: 'Folder 2',
+			description: 'Folder 2 description',
 			passwordHash: 'hash2',
 			participants: new Set(['user2']),
 			permissions: new Map([['user2', [Permission.READ]]])
@@ -148,6 +153,7 @@ describe('AccessControl', () => {
 		accessControl.createSharedFolder({
 			id: folderId,
 			name: 'Test Folder',
+			description: 'Test folder description',
 			passwordHash: 'hashed-password',
 			participants: new Set(['user1']),
 			permissions: new Map([['user1', [Permission.READ]]])
@@ -167,6 +173,7 @@ describe('AccessControl', () => {
 		accessControl.createSharedFolder({
 			id: folderId,
 			name: 'Test Folder',
+			description: 'Test folder description',
 			passwordHash,
 			participants: new Set(['user1']),
 			permissions: new Map([['user1', [Permission.READ]]])

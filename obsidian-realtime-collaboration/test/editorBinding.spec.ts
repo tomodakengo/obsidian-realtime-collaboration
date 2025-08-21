@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { ObsidianEditorBinding, ObsidianEditor } from '../src/collaborative/ObsidianEditorBinding'
 import * as Y from 'yjs'
-import { ObsidianEditorBinding, MinimalEditorLike } from '../src/collaborative/ObsidianEditorBinding'
 
 describe('ObsidianEditorBinding', () => {
 	let doc: Y.Doc
 	let text: Y.Text
-	let editor: MinimalEditorLike
+	let editor: ObsidianEditor
 	let binding: ObsidianEditorBinding
 
 	beforeEach(() => {
@@ -13,13 +13,11 @@ describe('ObsidianEditorBinding', () => {
 		text = doc.getText('content')
 		editor = {
 			on: vi.fn(),
+			getValue: vi.fn().mockReturnValue(''),
+			setValue: vi.fn(),
 			applyChange: vi.fn(),
 		}
 		binding = new ObsidianEditorBinding(text, editor)
-	})
-
-	afterEach(() => {
-		doc.destroy()
 	})
 
 	it('constructs and wires listeners without throwing', () => {
@@ -41,7 +39,9 @@ describe('ObsidianEditorBinding', () => {
 
 	it('can handle text deletion from Y.js', () => {
 		text.insert(0, 'Hello, World!')
-		text.delete(5, 7) // Delete ", "
+		// Y.js delete operation: delete(start, length)
+		// Delete ", " (comma and space) starting at position 5, length 2
+		text.delete(5, 2)
 		expect(text.toString()).toBe('HelloWorld!')
 	})
 
@@ -51,7 +51,7 @@ describe('ObsidianEditorBinding', () => {
 		expect(text.toString()).toBe('Hello, World!')
 	})
 
-	it('calls editor applyChange when remote changes occur', () => {
+	it('calls editor setValue when remote changes occur', () => {
 		// Reset the mock to clear previous calls
 		vi.clearAllMocks()
 		
@@ -61,13 +61,13 @@ describe('ObsidianEditorBinding', () => {
 		remoteText.insert(0, 'Remote change')
 		
 		// Get the update from the remote document
-		const update = Y.encodeUpdateAsUpdateV2(remoteDoc)
+		const update = Y.encodeStateAsUpdate(remoteDoc)
 		
 		// Apply the update to the local document
-		Y.applyUpdateV2(doc, update)
+		Y.applyUpdate(doc, update)
 		
-		// The binding should call the editor's applyChange method
-		expect(editor.applyChange).toHaveBeenCalled()
+		// The binding should call the editor's setValue method
+		expect(editor.setValue).toHaveBeenCalled()
 		
 		// Clean up
 		remoteDoc.destroy()

@@ -56,9 +56,11 @@ describe('YjsManager', () => {
 	})
 
 	it('can handle text deletion', () => {
-		const text = manager.getText()
+		const text = manager.getText('test')
 		text.insert(0, 'Hello, World!')
-		text.delete(5, 7) // Delete ", "
+		// Y.js delete operation: delete(start, length)
+		// Delete ", " (comma and space) starting at position 5, length 2
+		text.delete(5, 2)
 		expect(text.toString()).toBe('HelloWorld!')
 	})
 })

@@ -61,16 +61,13 @@ export class P2PProvider {
 	private setupEventListeners(): void {
 		if (!this.provider) return
 
-		this.provider.on('status', ({ status }: { status: string }) => {
-			switch (status) {
+		this.provider.on('status', ({ connected }: { connected: boolean }) => {
+			switch (connected ? 'connected' : 'disconnected') {
 				case 'connected':
 					this.connectionState = ConnectionState.CONNECTED
 					break
 				case 'disconnected':
 					this.connectionState = ConnectionState.DISCONNECTED
-					break
-				case 'connecting':
-					this.connectionState = ConnectionState.CONNECTING
 					break
 				default:
 					this.connectionState = ConnectionState.ERROR
@@ -78,18 +75,12 @@ export class P2PProvider {
 			this.notifyConnectionChange()
 		})
 
-		this.provider.on('peer-joined', (peer: any) => {
-			console.log('Peer joined:', peer)
+		this.provider.on('synced', () => {
+			console.log('WebRTC synced')
 		})
 
-		this.provider.on('peer-left', (peer: any) => {
-			console.log('Peer left:', peer)
-		})
-
-		this.provider.on('error', (error: any) => {
-			console.error('P2P provider error:', error)
-			this.connectionState = ConnectionState.ERROR
-			this.notifyConnectionChange()
+		this.provider.on('peers', (peers: any) => {
+			console.log('WebRTC peers:', peers)
 		})
 	}
 
