@@ -1,0 +1,151 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+        continue-on-error: false
+
+      - name: Validate manifest
+        run: |
+          node -e "
+            const manifest = JSON.parse(require('fs').readFileSync('manifest.json', 'utf8'));
+            const required = ['id', 'name', 'version', 'minAppVersion'];
+            for (const field of required) {
+              if (!manifest[field]) {
+                throw new Error(\`Missing required field: \${field}\`);
+              }
+            }
+            console.log('✅ Manifest validation passed');
+          "
+
+  build-and-release:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build plugin for production
+        run: npm run build:prod
+
+      - name: Get version and metadata
+        id: metadata
+        run: |
+          VERSION=$(node -p "require('./manifest.json').version")
+          PLUGIN_NAME=$(node -p "require('./manifest.json').name")
+          PLUGIN_ID=$(node -p "require('./manifest.json').id")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "plugin_name=$PLUGIN_NAME" >> $GITHUB_OUTPUT
+          echo "plugin_id=$PLUGIN_ID" >> $GITHUB_OUTPUT
+          echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: tag_exists
+        run: |
+          if git rev-parse "v${{ steps.metadata.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "⚠️ Tag v${{ steps.metadata.outputs.version }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "✅ Tag v${{ steps.metadata.outputs.version }} is new"
+          fi
+
+      - name: Prepare release assets
+        if: steps.tag_exists.outputs.exists == 'false'
+        run: |
+          mkdir -p release-assets
+          cp dist/main.js release-assets/
+          cp dist/main.js.map release-assets/
+          cp manifest.json release-assets/
+          
+          # Create installation instructions
+          cat > release-assets/INSTALL.md << 'EOF'
+          # Installation Instructions
+          
+          ## Manual Installation
+          1. Download the `main.js` and `manifest.json` files
+          2. Create a folder named `${{ steps.metadata.outputs.plugin_id }}` in your Obsidian plugins folder
+          3. Place the downloaded files in this folder
+          4. Enable the plugin in Obsidian settings
+          
+          ## Plugin Location
+          - Windows: `%APPDATA%\Obsidian\plugins\${{ steps.metadata.outputs.plugin_id }}\`
+          - macOS: `~/Library/Application Support/obsidian/plugins/${{ steps.metadata.outputs.plugin_id }}/`
+          - Linux: `~/.config/obsidian/plugins/${{ steps.metadata.outputs.plugin_id }}/`
+          EOF
+
+      - name: Create GitHub Release
+        if: steps.tag_exists.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.metadata.outputs.tag_name }}
+          name: ${{ steps.metadata.outputs.plugin_name }} v${{ steps.metadata.outputs.version }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            release-assets/main.js
+            release-assets/main.js.map
+            release-assets/manifest.json
+            release-assets/INSTALL.md
+          body: |
+            ## 🎉 ${{ steps.metadata.outputs.plugin_name }} v${{ steps.metadata.outputs.version }}
+            
+            ### 📦 Installation
+            Download the files below and follow the installation instructions in `INSTALL.md`.
+            
+            ### 🔧 Build Information
+            - Built with Node.js ${{ env.NODE_VERSION }}
+            - Build timestamp: ${{ github.event.head_commit.timestamp }}
+            - Commit: ${{ github.sha }}
+            
+            ### 📋 Files Included
+            - `main.js` - Main plugin file
+            - `main.js.map` - Source map for debugging
+            - `manifest.json` - Plugin manifest
+            - `INSTALL.md` - Installation instructions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Post-release summary
+        if: steps.tag_exists.outputs.exists == 'false'
+        run: |
+          echo "🎉 Successfully created release v${{ steps.metadata.outputs.version }}"
+          echo "📦 Plugin: ${{ steps.metadata.outputs.plugin_name }}"
+          echo "🔗 Release URL: https://github.com/${{ github.repository }}/releases/tag/v${{ steps.metadata.outputs.version }}"
