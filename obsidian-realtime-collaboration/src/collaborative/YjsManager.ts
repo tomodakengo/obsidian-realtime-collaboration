@@ -45,6 +45,10 @@ export class YjsManager {
 		return this.doc.getText(name)
 	}
 
+	getDoc(): Y.Doc {
+		return this.doc
+	}
+
 	destroy(): void {
 		this.providers.forEach((p) => {
 			try {
