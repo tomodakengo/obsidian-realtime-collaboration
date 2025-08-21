@@ -12,6 +12,12 @@ describe('YjsManager', () => {
 		expect(text).toBeInstanceOf(Y.Text)
 	})
 
+	it('exposes awareness instance', () => {
+		const manager = new YjsManager('test-doc')
+		const awareness = (manager as any).getAwareness?.()
+		expect(awareness).toBeDefined()
+	})
+
 	it('destroys providers and the doc without throwing', () => {
 		const manager = new YjsManager('test-doc')
 		expect(() => manager.destroy()).not.toThrow()

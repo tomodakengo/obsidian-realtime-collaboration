@@ -1,6 +1,7 @@
 import * as Y from 'yjs'
 import { WebrtcProvider } from 'y-webrtc'
 import { IndexeddbPersistence } from 'y-indexeddb'
+import * as awarenessProtocol from 'y-protocols/awareness'
 
 export interface YjsManagerOptions {
 	enableIndexeddb?: boolean
@@ -11,6 +12,7 @@ export interface YjsManagerOptions {
 export class YjsManager {
 	private readonly doc: Y.Doc
 	private readonly providers: Map<string, any> = new Map()
+	private readonly awareness: awarenessProtocol.Awareness
 
 	constructor(documentId: string, options: YjsManagerOptions = {}) {
 		const inBrowser = typeof window !== 'undefined' && typeof document !== 'undefined'
@@ -18,6 +20,7 @@ export class YjsManager {
 		const canWebrtc = inBrowser && typeof (globalThis as any).RTCPeerConnection !== 'undefined'
 
 		this.doc = options.doc ?? new Y.Doc()
+		this.awareness = new awarenessProtocol.Awareness(this.doc)
 
 		const shouldIndexeddb = options.enableIndexeddb ?? (inBrowser && hasIndexedDB)
 		const shouldWebrtc = options.enableWebrtc ?? canWebrtc
@@ -43,6 +46,10 @@ export class YjsManager {
 
 	getText(name: string = 'content'): Y.Text {
 		return this.doc.getText(name)
+	}
+
+	getAwareness(): awarenessProtocol.Awareness {
+		return this.awareness
 	}
 
 	destroy(): void {
