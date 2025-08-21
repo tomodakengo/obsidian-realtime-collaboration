@@ -1,5 +1,12 @@
 import { User } from '../types'
 
+export interface UserActivity {
+	type: 'insert' | 'delete' | 'update' | 'cursor' | 'selection'
+	position?: number
+	timestamp: number
+	metadata?: any
+}
+
 export interface UserAwarenessOptions {
 	maxUsers?: number
 	userTimeout?: number
@@ -7,6 +14,7 @@ export interface UserAwarenessOptions {
 
 export class UserAwareness {
 	private users: Map<string, User> = new Map()
+	private userActivities: Map<string, UserActivity[]> = new Map()
 	private userChangeCallbacks: ((users: User[]) => void)[] = []
 	private readonly maxUsers: number
 	private readonly userTimeout: number
@@ -30,6 +38,7 @@ export class UserAwareness {
 		}
 
 		this.users.set(user.id, user)
+		this.userActivities.set(user.id, [])
 		this.notifyUserChange()
 
 		// Set timeout to automatically remove inactive users
@@ -44,6 +53,7 @@ export class UserAwareness {
 	public removeUser(userId: string): void {
 		if (this.users.has(userId)) {
 			this.users.delete(userId)
+			this.userActivities.delete(userId)
 			
 			// Clear cleanup timer
 			if (this.cleanupTimers.has(userId)) {
@@ -60,6 +70,33 @@ export class UserAwareness {
 			this.users.set(user.id, user)
 			this.notifyUserChange()
 		}
+	}
+
+	public updateUserActivity(userId: string, activity: UserActivity): void {
+		if (!this.users.has(userId)) return
+
+		const activities = this.userActivities.get(userId) || []
+		activities.push(activity)
+
+		// Keep only the last 100 activities per user
+		if (activities.length > 100) {
+			activities.splice(0, activities.length - 100)
+		}
+
+		this.userActivities.set(userId, activities)
+
+		// Refresh user timeout
+		this.refreshUser(userId)
+	}
+
+	public getUserActivity(userId: string): UserActivity[] {
+		return this.userActivities.get(userId) || []
+	}
+
+	public getRecentUserActivity(userId: string, minutes: number = 5): UserActivity[] {
+		const activities = this.getUserActivity(userId)
+		const cutoffTime = Date.now() - (minutes * 60 * 1000)
+		return activities.filter(activity => activity.timestamp > cutoffTime)
 	}
 
 	public getUser(userId: string): User | undefined {
@@ -84,6 +121,7 @@ export class UserAwareness {
 		this.cleanupTimers.clear()
 
 		this.users.clear()
+		this.userActivities.clear()
 		this.notifyUserChange()
 	}
 
@@ -168,6 +206,7 @@ export class UserAwareness {
 		this.cleanupTimers.clear()
 
 		this.users.clear()
+		this.userActivities.clear()
 		this.userChangeCallbacks = []
 	}
 }

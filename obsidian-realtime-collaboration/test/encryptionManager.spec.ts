@@ -138,7 +138,7 @@ describe('EncryptionManager', () => {
 		const keyPair = await manager.generateKeyPair()
 		const originalData = new TextEncoder().encode('Hello, RSA!')
 		
-		const encrypted = await manager.encryptWithPublicKey(originalData, keyPair.publicKey)
+		const encrypted = await manager.encryptWithPublicKey(originalData.buffer, keyPair.publicKey)
 		const decrypted = await manager.decryptWithPrivateKey(encrypted, keyPair.privateKey)
 		
 		expect(new Uint8Array(decrypted)).toEqual(originalData)
@@ -148,8 +148,8 @@ describe('EncryptionManager', () => {
 		const keyPair = await manager.generateKeyPair()
 		const data = new TextEncoder().encode('Hello, Signature!')
 		
-		const signature = await manager.signData(data, keyPair.privateKey)
-		const isValid = await manager.verifySignature(data, signature, keyPair.publicKey)
+		const signature = await manager.signData(data.buffer, keyPair.privateKey)
+		const isValid = await manager.verifySignature(data.buffer, signature, keyPair.publicKey)
 		
 		expect(isValid).toBe(true)
 	})
