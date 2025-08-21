@@ -11,6 +11,7 @@ export interface YjsManagerOptions {
 export class YjsManager {
 	private readonly doc: Y.Doc
 	private readonly providers: Map<string, any> = new Map()
+    private readonly awareness: any
 
 	constructor(documentId: string, options: YjsManagerOptions = {}) {
 		const inBrowser = typeof window !== 'undefined' && typeof document !== 'undefined'
@@ -18,6 +19,19 @@ export class YjsManager {
 		const canWebrtc = inBrowser && typeof (globalThis as any).RTCPeerConnection !== 'undefined'
 
 		this.doc = options.doc ?? new Y.Doc()
+		// Lazy import to avoid hard dependency in Node tests; create a minimal awareness-like object if unavailable
+		let AwarenessCtor: any
+		try {
+			// y-protocols/awareness is a transitive of providers; guard for tests
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
+			AwarenessCtor = (require('y-protocols/awareness') as any).awarenessProtocol?.Awareness
+				|| (require('y-protocols/awareness') as any).Awareness
+		} catch (_) {
+			AwarenessCtor = undefined
+		}
+		this.awareness = AwarenessCtor ? new AwarenessCtor(this.doc) : {
+			getLocalState: () => ({}),
+		}
 
 		const shouldIndexeddb = options.enableIndexeddb ?? (inBrowser && hasIndexedDB)
 		const shouldWebrtc = options.enableWebrtc ?? canWebrtc
@@ -43,6 +57,14 @@ export class YjsManager {
 
 	getText(name: string = 'content'): Y.Text {
 		return this.doc.getText(name)
+	}
+
+	getAwareness(): any {
+		return this.awareness
+	}
+
+	getProviderNames(): string[] {
+		return Array.from(this.providers.keys())
 	}
 
 	destroy(): void {

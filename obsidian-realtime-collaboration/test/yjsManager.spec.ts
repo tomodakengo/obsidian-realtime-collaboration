@@ -16,4 +16,17 @@ describe('YjsManager', () => {
 		const manager = new YjsManager('test-doc')
 		expect(() => manager.destroy()).not.toThrow()
 	})
+
+	it('exposes an awareness instance', () => {
+		const manager = new YjsManager('awareness-doc')
+		const awareness: any = (manager as any).getAwareness()
+		expect(awareness).toBeDefined()
+		expect(typeof awareness.getLocalState).toBe('function')
+	})
+
+	it('respects provider disable flags', () => {
+		const manager = new YjsManager('no-providers', { enableIndexeddb: false, enableWebrtc: false })
+		expect(typeof (manager as any).getProviderNames).toBe('function')
+		expect((manager as any).getProviderNames()).toEqual([])
+	})
 })
