@@ -40,7 +40,20 @@ describe('EncryptionManager', () => {
 		const key1 = await manager.generateRoomKey('pass1', salt)
 		const key2 = await manager.generateRoomKey('pass2', salt)
 		
-		expect(key1).not.toEqual(key2)
+		// Test that keys are different by encrypting the same data and comparing results
+		const testData = new TextEncoder().encode('test data')
+		const encrypted1 = await manager.encryptUpdate(testData.buffer, key1)
+		const encrypted2 = await manager.encryptUpdate(testData.buffer, key2)
+		
+		// Different keys should produce different encrypted results
+		expect(encrypted1).not.toEqual(encrypted2)
+		
+		// Verify that each key can decrypt its own data
+		const decrypted1 = await manager.decryptUpdate(encrypted1, key1)
+		const decrypted2 = await manager.decryptUpdate(encrypted2, key2)
+		
+		expect(decrypted1).toEqual(testData)
+		expect(decrypted2).toEqual(testData)
 	})
 
 	it('generates different keys for different salts', async () => {
@@ -49,7 +62,20 @@ describe('EncryptionManager', () => {
 		const key1 = await manager.generateRoomKey('pass', salt1)
 		const key2 = await manager.generateRoomKey('pass', salt2)
 		
-		expect(key1).not.toEqual(key2)
+		// Test that keys are different by encrypting the same data and comparing results
+		const testData = new TextEncoder().encode('test data')
+		const encrypted1 = await manager.encryptUpdate(testData.buffer, key1)
+		const encrypted2 = await manager.encryptUpdate(testData.buffer, key2)
+		
+		// Different keys should produce different encrypted results
+		expect(encrypted1).not.toEqual(encrypted2)
+		
+		// Verify that each key can decrypt its own data
+		const decrypted1 = await manager.decryptUpdate(encrypted1, key1)
+		const decrypted2 = await manager.decryptUpdate(encrypted2, key2)
+		
+		expect(decrypted1).toEqual(testData)
+		expect(decrypted2).toEqual(testData)
 	})
 
 	it('handles empty payload encryption', async () => {
@@ -90,7 +116,21 @@ describe('EncryptionManager', () => {
 		
 		expect(key1).toBeDefined()
 		expect(key2).toBeDefined()
-		expect(key1).not.toEqual(key2)
+		
+		// Test that keys are different by encrypting the same data and comparing results
+		const testData = new TextEncoder().encode('test data')
+		const encrypted1 = await manager.encryptUpdate(testData.buffer, key1)
+		const encrypted2 = await manager.encryptUpdate(testData.buffer, key2)
+		
+		// Different keys should produce different encrypted results
+		expect(encrypted1).not.toEqual(encrypted2)
+		
+		// Verify that each key can decrypt its own data
+		const decrypted1 = await manager.decryptUpdate(encrypted1, key1)
+		const decrypted2 = await manager.decryptUpdate(encrypted2, key2)
+		
+		expect(decrypted1).toEqual(testData)
+		expect(decrypted2).toEqual(testData)
 	})
 
 	it('generates random salts', async () => {
@@ -145,7 +185,7 @@ describe('EncryptionManager', () => {
 	})
 
 	it('can sign and verify data', async () => {
-		const keyPair = await manager.generateKeyPair()
+		const keyPair = await manager.generateSigningKeyPair()
 		const data = new TextEncoder().encode('Hello, Signature!')
 		
 		const signature = await manager.signData(data.buffer, keyPair.privateKey)
