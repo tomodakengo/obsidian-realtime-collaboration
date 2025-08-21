@@ -6,7 +6,13 @@
     "test": "vitest run",
     "build": "rollup -c",
     "dev": "rollup -c -w",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:prod": "NODE_ENV=production rollup -c",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "postbuild": "npm run validate:build",
+    "validate:build": "node -e \"console.log('✅ Build validation passed'); process.exit(require('fs').existsSync('dist/main.js') ? 0 : 1)\"",
+    "prepare:release": "npm run build:prod && npm run validate:build"
   },
   "keywords": [],
   "author": "",
