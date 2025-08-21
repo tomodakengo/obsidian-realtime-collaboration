@@ -117,6 +117,19 @@ export class EncryptionManager {
 		)
 	}
 
+	async generateSigningKeyPair(): Promise<{ publicKey: CryptoKey; privateKey: CryptoKey }> {
+		return crypto.subtle.generateKey(
+			{
+				name: 'RSA-PSS',
+				modulusLength: 2048,
+				publicExponent: new Uint8Array([1, 0, 1]),
+				hash: 'SHA-256'
+			},
+			true,
+			['sign', 'verify']
+		)
+	}
+
 	async encryptWithPublicKey(data: ArrayBuffer, publicKey: CryptoKey): Promise<ArrayBuffer> {
 		return crypto.subtle.encrypt(
 			{ name: 'RSA-OAEP' },
