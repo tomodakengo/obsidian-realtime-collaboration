@@ -18,6 +18,28 @@ export class EncryptionManager {
 		return new Uint8Array([...iv, ...new Uint8Array(encrypted)])
 	}
 
+	async decryptUpdate(encryptedData: ArrayBuffer | ArrayBufferView, key: CryptoKey): Promise<Uint8Array> {
+		const data = new Uint8Array(this.toArrayBuffer(encryptedData))
+		
+		if (data.length < 12) {
+			throw new Error('Invalid encrypted data: too short for IV')
+		}
+		
+		const iv = data.slice(0, 12)
+		const ciphertext = data.slice(12)
+		
+		try {
+			const decrypted = await crypto.subtle.decrypt(
+				{ name: 'AES-GCM', iv },
+				key,
+				ciphertext
+			)
+			return new Uint8Array(decrypted)
+		} catch (error) {
+			throw new Error('Decryption failed: invalid key or corrupted data')
+		}
+	}
+
 	async generateRoomKey(password: string, salt: ArrayBuffer | ArrayBufferView): Promise<CryptoKey> {
 		const keyMaterial = await crypto.subtle.importKey(
 			'raw',
