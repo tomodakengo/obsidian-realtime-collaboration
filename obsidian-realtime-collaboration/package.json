@@ -11,24 +11,33 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "このプロジェクトは、Obsidian向けのリアルタイム協同編集プラグインです。設計方針と技術スタックは `.spec.md` に準拠します。",
   "type": "module",
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
     "@vitest/coverage-v8": "^3.2.4",
+    "jsdom": "^26.1.0",
+    "obsidian": "^1.8.7",
     "rimraf": "^6.0.1",
     "rollup": "^4.47.1",
     "rollup-plugin-typescript2": "^0.36.0",
     "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
     "typescript": "^5.9.2",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "y-protocols": "^1.0.6",
+    "y-websocket": "^3.0.0"
   },
   "dependencies": {
     "lib0": "^0.2.114",
     "y-indexeddb": "^9.0.12",
     "y-webrtc": "^10.3.0",
     "yjs": "^13.6.27"
+  },
+  "directories": {
+    "test": "test"
   }
 }
